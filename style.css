@@ -1,0 +1,15 @@
+.result {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  word-wrap: break-word;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.hidden {
+  display: none;
+}
+

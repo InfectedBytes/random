@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Random</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="section">
+    <label for="select-generator">Select Generator:</label><br>
+    <select id="select-generator">
+        <option value="">-- Select an Option --</option>
+        <option value="int-gen">Integer Generator</option>
+        <option value="list-gen">Shuffle List</option>
+    </select>
+</div>
+
+<div id="int-gen" class="section generator hidden">
+    <h2>Generate Random Numbers</h2>
+    <form id="int-form">
+        <label for="int-min">Minimum:</label><br>
+        <input type="number" id="int-min" name="min"><br><br>
+        <label for="int-max">Maximum:</label><br>
+        <input type="number" id="int-max" name="max"><br><br>
+        <label for="int-count">Count:</label><br>
+        <input type="number" id="int-count" name="count"><br><br>
+        <input type="submit" id="int-submit" value="Generate">
+    </form>
+</div>
+
+<div id="list-gen" class="section generator hidden">
+    <h2>Shuffle List</h2>
+    <form id="list-form">
+        <label for="list-input">Enter items to randomize (one per line):</label><br>
+        <textarea id="list-input" name="list"></textarea><br><br>
+        <input type="submit" id="list-submit" value="Shuffle">
+    </form>
+</div>
+
+<div class="result" id="result"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
