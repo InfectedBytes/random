@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <title>Random</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
 </head>
 <body>
 
 <div class="section">
-    <label for="select-generator">Select Generator:</label><br>
+    <label for="select-generator">Select Generator:</label>
     <select id="select-generator" onchange="app.select(this.value)">
         <option value="">-- Select an Option --</option>
         <option value="int-gen">Integer Generator</option>
@@ -17,29 +18,36 @@
 </div>
 
 <div id="int-gen" class="section generator hidden">
-    <h2>Generate Random Numbers</h2>
+    <p>
+        Generate random integers between a minimum and maximum value (inclusive).
+        Use the "Count" field to generate multiple integers.
+    </p>
     <form id="int-form">
-        <label for="int-min">Minimum:</label><br>
-        <input type="number" id="int-min" name="min"><br><br>
-        <label for="int-max">Maximum:</label><br>
-        <input type="number" id="int-max" name="max"><br><br>
-        <label for="int-count">Count:</label><br>
-        <input type="number" id="int-count" name="count"><br><br>
+        <label for="int-min">Minimum:</label>
+        <input type="number" id="int-min" name="min">
+        <label for="int-max">Maximum:</label>
+        <input type="number" id="int-max" name="max">
+        <label for="int-count">Count:</label>
+        <input type="number" id="int-count" name="count">
     </form>
 </div>
 
 <div id="list-gen" class="section generator hidden">
-    <h2>Shuffle List</h2>
+    <p>Randomly shuffle a list of entries (one per line).</p>
     <form id="list-form">
-        <label for="list-input">Enter items to randomize (one per line):</label><br>
-        <textarea id="list-input" name="list"></textarea><br><br>
+        <label for="list-input">Items to randomize:</label>
+        <textarea id="list-input" name="list"></textarea>
     </form>
 </div>
 
-<div id="buttons" class="hidden">
-    <button id="submit" onclick="app.generate()">Generate</button>
-    <button id="clear" onclick="app.clear()">Clear</button>
-    <button id="copy" onclick="app.copyQuery()">Copy Query</button>
+<div id="shared-controls" class="hidden">
+    <form>
+        <label for="seed">Seed (leave empty for a random seed):</label>
+        <input type="text" id="seed" value="" onchange="app.seed = this.value">
+    </form>
+    <button onclick="app.generate()">Generate</button>
+    <button onclick="app.clear()">Clear</button>
+    <button onclick="app.copyQuery()">Copy Query</button>
 </div>
 
 <div class="result" id="result"></div>

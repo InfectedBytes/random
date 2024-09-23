@@ -178,6 +178,7 @@ const generators = [new IntGenerator(), new ListGenerator()];
 /// UI is optional, thus all operations must work with and without UI.
 class App {
   selected;
+  seed = "";
 
   /// clears the form and the result.
   clear() {
@@ -192,23 +193,29 @@ class App {
   }
   /// selects the generator with the given name, hides all other generators and shows the selected generator.
   select(name) {
-    this.#hideAllGenerators();
     this.selected = generators.find(gen => gen.sectionName === name);
-    let buttons = document.getElementById("buttons");
+    this.configureForm();
+  }
+  configureForm() {
+    this.#hideAllGenerators();
+    let controls = document.getElementById("shared-controls");
     if(this.selected) {
       this.selected.configureForm();
       this.selected.show();
-      buttons?.classList?.remove("hidden");
+      controls?.classList?.remove("hidden");
     } else {
-      buttons?.classList?.add("hidden");
+      controls?.classList?.add("hidden");
     }
     let selector = document.getElementById("select-generator");
-    if(selector) selector.value = name;
+    if(selector) selector.value = this.selected?.sectionName || "";
+    let seed = document.getElementById("seed");
+    if(seed) seed.value = this.seed;
   }
   /// parses the url parameters and selects the generator with the given name.
   /// it then generates the values and displays them.
   parseSearch(urlParams) {
     if(urlParams.has("generator")) {
+      this.seed = urlParams.get("seed") || "";
       this.select(urlParams.get("generator"));
       if(this.selected) {
         this.selected.readParams(urlParams);
@@ -221,7 +228,8 @@ class App {
   generate() {
     if(this.selected) {
       this.selected.readForm();
-      document.getElementById("result").innerHTML = this.selected.generate(new MersenneRandom(123));
+      let seed = hash(this.seed || Math.random());
+      document.getElementById("result").innerHTML = this.selected.generate(new MersenneRandom(seed));
     }
   }
   /// copies the url with the current generator and parameters to the clipboard.
