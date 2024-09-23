@@ -1,3 +1,38 @@
+// ------------------------------ RANDOM ------------------------------
+class Random {
+  int(min, max) { }
+  float(min, max) { }
+  random() { }
+}
+
+class MersenneRandom extends Random {
+  constructor(seed) {
+    super();
+    this.mt = new MersenneTwister(seed);
+  }
+  int(min, max) {
+    const range = max - min + 1;
+    const rnd = this.mt.int() % range;
+    return min + rnd;
+  }
+  float(min, max) {
+    return min + this.mt.rnd() * (max - min);
+  }
+  random() {
+    return this.mt.rnd();
+  }
+}
+
+function hash(value) {
+  str = value.toString();
+  let result = 0;
+  for(let i = 0; i < str.length; i++) {
+    result = ((result << 5) - result) + str.charCodeAt(i);
+    result |= 0; // Convert to 32bit integer
+  }
+  return result;
+}
+
 // ------------------------------ VALUES ------------------------------
 
 /// represents a value that can be parsed from a string and configured in a form element.
@@ -88,7 +123,7 @@ class Generator {
   }
 
   /// generates the values and returns them as already formatted html string.
-  generate() { }
+  generate(_rnd) { }
 }
 
 class IntGenerator extends Generator {
@@ -96,10 +131,10 @@ class IntGenerator extends Generator {
   max = new IntValue(0, 100, 100);
   count = new IntValue(1, 100, 1);
 
-  generate() {
+  generate(rnd) {
     let result = [];
     for(let i = 0; i < this.count.value; i++) {
-      result.push(Math.floor(Math.random() * (this.max.value - this.min.value + 1)) + this.min.value);
+      result.push(rnd.int(this.min.value, this.max.value));
     }
     return `<pre>${result.join("\n")}</pre>`;
   }
@@ -108,9 +143,9 @@ class IntGenerator extends Generator {
 class ListGenerator extends Generator {
   input = new StringListValue();
 
-  generate() {
+  generate(rnd) {
     let shuffled = this.input.value
-      .map(value => ({ value, sort: Math.random() }))
+      .map(value => ({ value, sort: rnd.random() }))
       .sort((a, b) => a.sort - b.sort)
       .map(({ value }) => value)
     return `<pre>${shuffled.join("\n")}</pre>`;
@@ -134,6 +169,8 @@ function attachToHtml() {
     }
   }
 
+  let rnd = new MersenneRandom(123);
+
   let selector = document.getElementById("select-generator");
   selector.addEventListener("change", e => select(e.target.value));
   document.querySelectorAll("form").forEach(form => {
@@ -142,7 +179,7 @@ function attachToHtml() {
       let selected = generators.find(gen => gen.sectionName === selector.value);
       if(selected) {
         selected.readForm();
-        document.getElementById("result").innerHTML = selected.generate();
+        document.getElementById("result").innerHTML = selected.generate(rnd);
       }
     });
   });
@@ -154,7 +191,7 @@ function attachToHtml() {
       selected.readParams(urlParams);
       selected.configureForm();
       selected.show();
-      document.getElementById("result").innerHTML = selected.generate();
+      document.getElementById("result").innerHTML = selected.generate(rnd);
     }
   }
 }
