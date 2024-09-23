@@ -1,10 +1,15 @@
 // ------------------------------ RANDOM ------------------------------
+/// represents a random number generator.
 class Random {
-  int(min, max) { }
-  float(min, max) { }
+  /// returns a random integer between min and max (inclusive).
+  int(_min, _max) { }
+  /// returns a random float between min and max.
+  float(_min, _max) { }
+  /// returns a random float between 0 and 1.
   random() { }
 }
 
+/// represents a random number generator based on the Mersenne Twister algorithm.
 class MersenneRandom extends Random {
   constructor(seed) {
     super();
@@ -15,14 +20,11 @@ class MersenneRandom extends Random {
     const rnd = this.mt.int() % range;
     return min + rnd;
   }
-  float(min, max) {
-    return min + this.mt.rnd() * (max - min);
-  }
-  random() {
-    return this.mt.rnd();
-  }
+  float(min, max) { return min + this.mt.rnd() * (max - min); }
+  random() { return this.mt.rnd(); }
 }
 
+/// generates a hash value from the given value.
 function hash(value) {
   str = value.toString();
   let result = 0;
@@ -41,8 +43,8 @@ class Value {
   /// receives a string value and parses it to an appropriate type.
   parse(value) { return value; }
   /// returns the string representation of the value, used for exporting the value in the url.
-  export() { return toString(this.value); }
-  /// configures the given form element, for example by setting the min and max values.
+  export() { return this.value?.toString() || ""; }
+  /// configures the given form element, for example by setting the min and max values of the form element.
   configureForm(_element) { }
 }
 
@@ -92,16 +94,17 @@ class Generator {
   #getElement(name) { return document.getElementById(`${this.prefix}-${name}`); }
 
   /// hides the section of this generator.
-  hide() { document.getElementById(this.sectionName).classList.add("hidden"); }
+  hide() { document.getElementById(this.sectionName)?.classList?.add("hidden"); }
   /// shows the section of this generator.
-  show() { document.getElementById(this.sectionName).classList.remove("hidden"); }
+  show() { document.getElementById(this.sectionName)?.classList?.remove("hidden"); }
 
   /// reads the values from the form elements
   readForm() {
     for(let key in this) {
       let obj = this[key];
       if(obj instanceof Value) {
-        obj.value = obj.parse(this.#getElement(key).value);
+        let element = this.#getElement(key);
+        if(element) obj.value = obj.parse(element.value);
       }
     }
   }
@@ -110,7 +113,8 @@ class Generator {
     for(let key in this) {
       let obj = this[key];
       if(obj instanceof Value) {
-        obj.configureForm(this.#getElement(key));
+        let element = this.#getElement(key);
+        if(element) obj.configureForm(element);
       }
     }
   }
@@ -118,7 +122,19 @@ class Generator {
   /// reads the values from the url parameters by calling readParams on all value properties.
   readParams(urlParams) {
     for(let key in this) {
-      this[key].value = this[key].parse(urlParams.get(key));
+      let obj = this[key];
+      if(obj instanceof Value) {
+        this[key].value = this[key].parse(urlParams.get(key));
+      }
+    }
+  }
+
+  exportParams(urlParams) {
+    for(let key in this) {
+      let obj = this[key];
+      if(obj instanceof Value) {
+        urlParams.set(key, this[key].export());
+      }
     }
   }
 
@@ -155,47 +171,75 @@ class ListGenerator extends Generator {
 // ------------------------------ GENERATORS ------------------------------
 const generators = [new IntGenerator(), new ListGenerator()];
 
-// ------------------------------ SETUP HTML ------------------------------
-function attachToHtml() {
-  function hideAllGenerators() {
+// ------------------------------ APPLICATION ------------------------------
+/// represents the main application.
+/// this class is responsible for managing the selected generator and the form elements.
+/// it also handles the url parameters and the generation of the random values.
+/// UI is optional, thus all operations must work with and without UI.
+class App {
+  selected;
+
+  /// clears the form and the result.
+  clear() {
+    document.getElementById("select-generator").selectedIndex = 0;
+    this.select("");
+    document.getElementById("result").innerHTML = "";
+  }
+
+  /// hides all generators.
+  #hideAllGenerators() {
     generators.forEach(gen => gen.hide());
   }
-  function select(name) {
-    hideAllGenerators();
-    let selected = generators.find(gen => gen.sectionName === name);
-    if(selected) {
-      selected.configureForm();
-      selected.show();
+  /// selects the generator with the given name, hides all other generators and shows the selected generator.
+  select(name) {
+    this.#hideAllGenerators();
+    this.selected = generators.find(gen => gen.sectionName === name);
+    let buttons = document.getElementById("buttons");
+    if(this.selected) {
+      this.selected.configureForm();
+      this.selected.show();
+      buttons?.classList?.remove("hidden");
+    } else {
+      buttons?.classList?.add("hidden");
+    }
+    let selector = document.getElementById("select-generator");
+    if(selector) selector.value = name;
+  }
+  /// parses the url parameters and selects the generator with the given name.
+  /// it then generates the values and displays them.
+  parseSearch(urlParams) {
+    if(urlParams.has("generator")) {
+      this.select(urlParams.get("generator"));
+      if(this.selected) {
+        this.selected.readParams(urlParams);
+        this.selected.configureForm();
+        this.generate();
+      }
     }
   }
-
-  let rnd = new MersenneRandom(123);
-
-  let selector = document.getElementById("select-generator");
-  selector.addEventListener("change", e => select(e.target.value));
-  document.querySelectorAll("form").forEach(form => {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      let selected = generators.find(gen => gen.sectionName === selector.value);
-      if(selected) {
-        selected.readForm();
-        document.getElementById("result").innerHTML = selected.generate(rnd);
-      }
-    });
-  });
-  let urlParams = new URLSearchParams(window.location.search);
-  if(urlParams.has("generator")) {
-    selector.value = urlParams.get("generator");
-    let selected = generators.find(gen => gen.sectionName === selector.value);
-    if(selected) {
-      selected.readParams(urlParams);
-      selected.configureForm();
-      selected.show();
-      document.getElementById("result").innerHTML = selected.generate(rnd);
+  /// generates the values and displays them.
+  generate() {
+    if(this.selected) {
+      this.selected.readForm();
+      document.getElementById("result").innerHTML = this.selected.generate(new MersenneRandom(123));
+    }
+  }
+  /// copies the url with the current generator and parameters to the clipboard.
+  copyQuery() {
+    if(this.selected) {
+      this.selected.readForm();
+      let url = new URL(window.location);
+      let urlParams = new URLSearchParams();
+      urlParams.set("generator", this.selected.sectionName);
+      this.selected.exportParams(urlParams);
+      url.search = urlParams.toString();
+      navigator.clipboard.writeText(url.href);
     }
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  attachToHtml();
+app = new App();
+
+document.addEventListener("DOMContentLoaded", () => {
+  app.parseSearch(new URLSearchParams(window.location.search));
 });
